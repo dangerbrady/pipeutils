@@ -8,6 +8,7 @@ import (
 	"bufio"
 	"io"
 	"os"
+	"time"
 
 	"github.com/spf13/cobra"
 )
@@ -65,7 +66,18 @@ func inspectPipe() {
 	go func() {
 		//fmt.Fprint(pw, "some io.Reader stream to be read\n")
 		reader := bufio.NewReader(os.Stdin)
-		io.Copy(pw, reader)
+		//io.Copy(pw, reader)
+
+		for {
+			_, err := io.CopyN(pw, reader, 1024*100)
+
+			if err != nil {
+				break
+			}
+			time.Sleep(5 * time.Second)
+
+		}
+
 		pw.Close()
 	}()
 
