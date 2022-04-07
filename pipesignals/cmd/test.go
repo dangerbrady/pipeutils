@@ -25,8 +25,14 @@ This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		//fmt.Println("test called")
+		main()
 	},
 }
+
+var readBufferSize int
+var readBufferDelay int
+var ctlFile string
+var ctlFileContents string
 
 func init() {
 	rootCmd.AddCommand(testCmd)
@@ -39,19 +45,55 @@ func init() {
 
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
-	// testCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")s
 
-	print("Hello from Test!\n")
+	testCmd.Flags().IntVarP(&readBufferSize, "read-buffer-size", "r", 1024, "Size of CopyN in Bytes")
+	testCmd.Flags().IntVarP(&readBufferDelay, "read-buffer-delay", "d", 0, "Length of delay between reads in seconds")
+	testCmd.Flags().StringVarP(&ctlFile, "control-file", "f", "./pipe.ctl", "File for controling pipe")
 
+	print("Hello from Test Init!\n")
+
+}
+
+func readCtlFile() {
+
+	for {
+		dat, err := os.ReadFile(ctlFile)
+		if err != nil {
+			panic(err)
+		}
+		ctlFileContents = string(dat)
+		/**
+		print("Contents of ctl file: ", string(dat))
+		if string(dat) == "0" {
+			print("zero")
+		} else {
+			print(string(dat))
+		}
+		**/
+
+		time.Sleep(5 * time.Second)
+
+	}
+}
+
+func main() {
 	if isInputFromPipe() {
 		print("> Input is from pipe\n")
 		// This is where we will call the processing for the pipe
-		inspectPipe()
+		delayPipe(readBufferSize, readBufferDelay)
 		print(">> Goodby from pipeutil\n")
 	} else {
 		print("> Input is not from a pipe\n")
+		print("\n")
+		print("main says ", readBufferSize)
 	}
 
+}
+
+func printFlags() {
+	var rbs int
+	rbs = readBufferSize
+	print("\nPrintFlags says >>> ", rbs)
 }
 
 func isInputFromPipe() bool {
@@ -59,7 +101,9 @@ func isInputFromPipe() bool {
 	return fi.Mode()&os.ModeCharDevice == 0
 }
 
-func inspectPipe() {
+func delayPipe(readBufferSize int, readBufferDelay int) {
+
+	go readCtlFile()
 
 	pr, pw := io.Pipe()
 
@@ -69,13 +113,14 @@ func inspectPipe() {
 		//io.Copy(pw, reader)
 
 		for {
-			_, err := io.CopyN(pw, reader, 1024*100)
+			_, err := io.CopyN(pw, reader, int64(readBufferSize))
 
 			if err != nil {
 				break
 			}
-			time.Sleep(5 * time.Second)
-
+			if ctlFileContents == "1" {
+				time.Sleep(time.Duration(readBufferDelay) * time.Second)
+			}
 		}
 
 		pw.Close()
