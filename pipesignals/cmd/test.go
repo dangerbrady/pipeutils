@@ -46,6 +46,7 @@ func init() {
 		print("> Input is from pipe\n")
 		// This is where we will call the processing for the pipe
 		inspectPipe()
+		print(">> Goodby from pipeutil\n")
 	} else {
 		print("> Input is not from a pipe\n")
 	}
