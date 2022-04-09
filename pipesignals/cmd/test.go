@@ -62,15 +62,6 @@ func readCtlFile() {
 			panic(err)
 		}
 		ctlFileContents = string(dat)
-		/**
-		print("Contents of ctl file: ", string(dat))
-		if string(dat) == "0" {
-			print("zero")
-		} else {
-			print(string(dat))
-		}
-		**/
-
 		time.Sleep(5 * time.Second)
 
 	}
